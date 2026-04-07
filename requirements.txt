@@ -1,0 +1,12 @@
+numpy
+matplotlib
+pandas
+pyarrow
+tablespip 
+scipy
+scikit-learn
+cupy-cuda12x
+tensorflow
+tqdm
+keras
+torch

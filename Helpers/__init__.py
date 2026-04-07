@@ -1,0 +1,1 @@
+from .MultiGPUCONSERVAttack import generate_adversarial_samples
