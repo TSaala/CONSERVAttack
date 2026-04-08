@@ -20,19 +20,24 @@ def main():
     results_path = './Results'
     model_path = './Models'
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_adversaries", type=int, default=5000)
+    args = parser.parse_args()
+
+
     os.makedirs(results_path, exist_ok=True)
     os.makedirs(model_path, exist_ok=True)
 
-    # --- 1. Load the dummy data ---
+    # --- Load the dummy data (generated in ./Data/MakeDonutDummyData.py)---
     df = pd.read_csv(os.path.join(path_to_data, 'donut_signal_background.csv'))
     X = df[['x1', 'x2']].to_numpy()
     y = df['Label'].to_numpy()  # 0: signal, 1: background
 
-    # --- 2. Train/test split ---
+    # --- Train/test split ---
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
 
 
-    # --- 3. Train a simple classifier (only if not already trained) ---
+    # --- Train a simple classifier (only if not already trained) ---
     model_file = os.path.join(model_path, 'best_model.keras')
     if os.path.exists(model_file):
         model = keras.models.load_model(model_file)
@@ -59,7 +64,7 @@ def main():
         )
         print(f"Trained and saved model to {model_file}")
 
-    # --- 4. Evaluate on test set ---
+    # --- Evaluate on test set ---
     y_pred = (model.predict(X_test) > 0.5).astype(int).flatten()
     print(f"Test accuracy: {accuracy_score(y_test, y_pred):.4f}")
 
@@ -109,7 +114,7 @@ def main():
     plt.show()
 
 
-    # --- 5. Select background test samples that are correctly classified ---
+    # --- Select background test samples that are correctly classified (these will be used for the attack) ---
     bg_mask = (y_test == 1)
     bg_X_test = X_test[bg_mask]
     bg_y_test = y_test[bg_mask]
@@ -119,8 +124,8 @@ def main():
     bg_y_test_correct = bg_y_test[correct_bg_mask]
     print(f"Correctly classified background samples: {bg_X_test_correct.shape[0]}")
 
-    # --- Limit number of test background samples for adversarial generation ---
-    max_test = 5000
+    # --- Optional: Limit number of test background samples for adversarial generation ---
+    max_test = args.num_adversaries
     if bg_X_test_correct.shape[0] > max_test:
         idx = np.random.choice(bg_X_test_correct.shape[0], max_test, replace=False)
         bg_X_test_correct = bg_X_test_correct[idx]
@@ -145,7 +150,9 @@ def main():
     print(bg_X_test_correct)
     print("Shapes of correctly classified background samples:")
     print(bg_X_test_correct.shape, bg_y_test_correct.shape)
-    # --- 6. Generate adversarial samples for these background samples ---
+
+
+    # --- Generate adversarial samples for these background samples ---
     adversarial_path = os.path.join(results_path, f'adversarial_samples_bg.feather')
     if os.path.exists(adversarial_path):
         adv_df = pd.read_feather(adversarial_path)
@@ -177,12 +184,12 @@ def main():
         adv_df['Label'] = bg_y_test_correct
         adv_df.to_feather(adversarial_path)
 
-    # --- 7. Check classifier predictions on adversarial samples ---
+    # --- Check classifier predictions on adversarial samples ---
     adv_pred = (model.predict(advs, batch_size=1024) > 0.5).astype(int).flatten()
     fooling_ratio = np.mean(adv_pred != bg_y_test_correct)
     print(f"Fooling ratio (background misclassified as signal): {fooling_ratio:.4f}")
 
-    # --- 8. Plot 2D distributions before and after attack ---
+    # --- Plot 2D distributions before and after attack ---
     plt.figure(figsize=(12, 5))
     plt.subplot(1, 2, 1)
     plt.scatter(bg_X_test_correct[:, 0], bg_X_test_correct[:, 1], c='blue', alpha=0.4, label='Original Background')
@@ -198,7 +205,7 @@ def main():
     plt.savefig(os.path.join(results_path, 'adversarial_vs_original_background_2d.pdf'))
     plt.show()
 
-    # --- 9. Plot 1D marginals and correlation matrices ---
+    # --- Plot 1D marginals and correlation matrices ---
     def plot_marginals_and_corr(X1, X2, label1, label2, fname_prefix):
         fig, axs = plt.subplots(2, 2, figsize=(10, 8))
         axs[0, 0].hist(X1[:, 0], bins=50, alpha=0.6, label=label1)
@@ -221,7 +228,7 @@ def main():
 
     plot_marginals_and_corr(bg_X_test_correct, advs, "Original BG", "Adversarial BG", "bg_adversarial_comparison")
 
-    # --- 10. Print linear and total correlation for clean and adversarial sets ---
+    # --- Print linear and total correlation for clean and adversarial sets ---
     from sklearn.metrics import mutual_info_score
 
     def total_correlation(x, y, bins=50):

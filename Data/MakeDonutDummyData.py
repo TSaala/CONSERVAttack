@@ -1,11 +1,19 @@
+import argparse
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--num_signal", type=int, default=50000)
+parser.add_argument("--num_background", type=int, default=50000)
+args = parser.parse_args()
+
+
 path_to_data = "./Data"
-n_signal = 50000
-n_background = 50000
+n_signal = args.num_signal
+n_background = args.num_background
 sigma = 0.5
 r_ring = 1.8
 
@@ -19,7 +27,7 @@ radius_bg = np.random.normal(r_ring, sigma, n_background)
 x_background = radius_bg * np.cos(theta_bg)
 y_background = radius_bg * np.sin(theta_bg)
 
-# Plot
+# Plot to visualize the signal and background distributions
 plt.figure(figsize=(7,7))
 plt.scatter(x_signal, y_signal, s=8, label='Signal', alpha=0.6)
 plt.scatter(x_background, y_background, s=8, label='Background', alpha=0.6)
@@ -28,7 +36,7 @@ plt.legend()
 plt.title('Signal (2D Gaussian) vs. Background (Ring)')
 plt.xlabel('x')
 plt.ylabel('y')
-plt.show()
+#plt.show()
 
 
 def print_feature_stats(X, label):
@@ -50,6 +58,7 @@ def print_feature_stats(X, label):
             print(f"Feature {i}: min={min_val:.4f}, max={max_val:.4f}")
             print(f"  Histogram bins: {hist}")
             print(f"  Bin edges: {bin_edges}\n")
+
 
 # For background, print stats for both x and y as features
 bg_features = np.stack([x_background, y_background], axis=1)

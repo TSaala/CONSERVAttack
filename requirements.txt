@@ -10,3 +10,4 @@ tensorflow
 tqdm
 keras
 torch
+seaborn
