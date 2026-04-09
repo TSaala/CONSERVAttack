@@ -38,7 +38,24 @@ torch
 ```
 ---
 
-## Pipeline
+## Detector Pipeline
+
+A runscript for the full detector pipeline can be found in `run_detector_pipeline.py`. There, a few parameters should be adjusted:
+
+- N_RUNS (int): How many independent detector runs should be done for the cross run test
+- RUN_PREFIX (str): Name of the experiment (e.g. DonutDetector)
+- NUM_SIGNAL (int): How many signal events should be generated for the DonutDummy dataset
+- NUM_BACKGROUND: How many background events should be generated for the DonutDummy dataset
+- TRAIN_ADV_SIZE: How many training adversaries should be generated for the detector pipeline
+- VAL_ADV_SIZE: How many validation adversaries should be generated for the detector pipeline
+- TEST_ADV_SIZE: How many test adversaries should be generated for the detector pipeline
+
+
+> **Note:** For further adjustments - such as adjusting the attack hyperparameters, or the hyperparameters of the base line or the detector network - the respective code blocks in `Detector/DetectorPipeline.py` need to be adjusted.
+
+---
+
+## Attack Pipeline
 
 ### Step 1 — Generate dummy data
 
